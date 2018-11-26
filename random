@@ -1,0 +1,105 @@
+//Written by : Mohannad Rawashdeh
+// this code For MP3 Shield Elechosue
+// Software serial interface
+// For product : http://www.elechouse.com/elechouse/index.php?main_page=product_info&cPath=168_170&products_id=2193
+//http://www.instructables.com/member/Mohannad+Rawashdeh/
+
+#include <SoftwareSerial.h>
+SoftwareSerial Geno(7, 8); // Rx , Tx
+unsigned char cmd_buf[10];
+unsigned char i;
+int sensorValue = 0;
+int work = 0;
+int num = 0;
+int staus = 0;
+byte randNumber;
+void ArduinoMP3Shield_SendCMD(unsigned char *cmd_buf, unsigned len)
+{
+  unsigned i;
+  for (i = 0; i < len; i++) {
+    Geno.write(cmd_buf[i]);
+  }
+}
+
+void setup(void)
+{
+  /** wait until arduino mp3 shield get ready */
+  delay(1000);
+
+  Geno.begin(9600);
+  pinMode(3, INPUT);
+  pinMode(13, OUTPUT);
+
+  /** set volume */
+  cmd_buf[0] = 0x7E;          // START
+  cmd_buf[1] = 0x02;          // Length
+  cmd_buf[2] = 0xA7;          // Command
+  cmd_buf[3] = 0x05;          // new volume
+  cmd_buf[4] = 0x7E;          // END
+  ArduinoMP3Shield_SendCMD(cmd_buf, 5);
+
+  /** set play mode repeat all */
+  cmd_buf[0] = 0x7E;          // START
+  cmd_buf[1] = 0x03;          // Length
+  cmd_buf[2] = 0xA9;          // Command SET MODE
+  cmd_buf[3] = 0x03;          // set mode
+  cmd_buf[4] = 0x7E;          // END
+  ArduinoMP3Shield_SendCMD(cmd_buf, 5);
+
+  /** select SD card first music and play */
+
+}
+
+void set_volume(void) {
+  cmd_buf[0] = 0x7E;          // START
+  cmd_buf[1] = 0x02;          // Length
+  cmd_buf[2] = 0xA7;          // Command
+  cmd_buf[3] = 0x05;          // new volume
+  cmd_buf[4] = 0x7E;          // END
+  ArduinoMP3Shield_SendCMD(cmd_buf, 5);
+
+
+
+
+}
+//播放第幾首
+void song_play(byte randNumber) {
+  cmd_buf[0] = 0x7E;          // START
+  cmd_buf[1] = 0x04;          // Length
+  cmd_buf[2] = 0xA2;          // Command
+  cmd_buf[3] = 0x00;          // file number high byte
+  cmd_buf[4] = randNumber;          // file number low byte
+  cmd_buf[5] = 0x7E;          // END
+  ArduinoMP3Shield_SendCMD(cmd_buf, 6);
+}
+void Stop(void) {
+  cmd_buf[0] = 0x7E;          // START
+  cmd_buf[1] = 0x02;          // Length
+  cmd_buf[2] = 0xA4;          // Command
+  cmd_buf[3] = 0x7E;          //Mode parameter
+  ArduinoMP3Shield_SendCMD(cmd_buf, 4);
+}
+void loop(void)
+{
+  sensorValue = digitalRead(3);
+  if (sensorValue == LOW) {
+    digitalWrite(13, LOW);
+    num = num + 1;
+    if (num >= 5) {
+      num = 0;
+      staus = 0;
+      Stop();
+    }
+  } else {
+    num = 0;
+    digitalWrite(13, HIGH);
+    if (staus == 0) {
+      staus = 1;
+      randNumber = random(1, 6);
+      //set_volume();
+      song_play(randNumber);
+    }
+
+  }
+  delay(2000);
+}
